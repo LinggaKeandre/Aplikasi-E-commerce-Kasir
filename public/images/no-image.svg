@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect fill="#e5e7eb" width="400" height="400"/>
+  <g fill="#9ca3af">
+    <path d="M150 140h100v20H150zm0 40h100v20H150z"/>
+    <rect x="120" y="100" width="160" height="160" rx="8" fill="none" stroke="#9ca3af" stroke-width="4"/>
+    <circle cx="160" cy="160" r="20"/>
+    <path d="M120 240l40-40 30 30 50-60 40 50v40H120z"/>
+  </g>
+  <text x="200" y="310" font-family="Arial" font-size="16" fill="#6b7280" text-anchor="middle">No Image</text>
+</svg>

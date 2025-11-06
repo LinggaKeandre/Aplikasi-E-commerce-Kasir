@@ -1,0 +1,326 @@
+@extends('layouts.app')
+
+@section('content')
+    <div class="my-4" x-data="{ 
+        currentSlide: 0, 
+        totalSlides: {{ $banners->count() > 0 ? ceil($banners->count() / 2) : 1 }},
+        bannersPerSlide: 2
+    }">
+        <!-- banner carousel - 2 banners per slide -->
+        @if($banners->count() > 0)
+            <div class="relative overflow-hidden rounded-lg mb-6" 
+                 x-init="setInterval(() => { currentSlide = (currentSlide + 1) % totalSlides }, 5000)">
+                <div class="flex transition-transform duration-500" :style="`transform: translateX(-${currentSlide * 100}%)`">
+                    @php $chunks = $banners->chunk(2); @endphp
+                    @foreach($chunks as $chunk)
+                        <div class="w-full flex-shrink-0 grid grid-cols-1 md:grid-cols-2 gap-4 px-1">
+                            @foreach($chunk as $banner)
+                                <div class="rounded-lg overflow-hidden">
+                                    <img src="{{ asset('storage/' . $banner->image_path) }}" 
+                                         alt="{{ $banner->title }}"
+                                         class="w-full h-40 md:h-44 lg:h-48 object-cover">
+                                </div>
+                            @endforeach
+                        </div>
+                    @endforeach
+                </div>
+                <!-- Dots -->
+                @if($chunks->count() > 1)
+                    <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
+                        <template x-for="i in totalSlides" :key="i">
+                            <button @click="currentSlide = i - 1" 
+                                    :class="currentSlide === i - 1 ? 'bg-white' : 'bg-white/50'" 
+                                    class="w-2 h-2 rounded-full transition-all hover:bg-white"></button>
+                        </template>
+                    </div>
+                @endif
+                
+                <!-- Navigation Arrows -->
+                @if($chunks->count() > 1)
+                    <button @click="currentSlide = currentSlide > 0 ? currentSlide - 1 : totalSlides - 1"
+                            class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <button @click="currentSlide = (currentSlide + 1) % totalSlides"
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                @endif
+            </div>
+        @else
+            <!-- Placeholder jika belum ada banner -->
+            <div class="relative overflow-hidden rounded-lg mb-6 h-40 md:h-44 lg:h-48 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                <div class="text-center text-white">
+                    <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <h3 class="text-2xl font-bold">Selamat Datang</h3>
+                    <p class="text-lg mt-2">Belum ada banner promosi</p>
+                </div>
+            </div>
+        @endif
+
+        <!-- Daily Rewards Section (Only for logged-in users) -->
+        @auth
+            @if($dailyReward && count($days) > 0)
+                <div class="mb-8 bg-white rounded-xl shadow-md p-6">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            Daily check in
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">Continuous check-in for 7 days will earn surprise!</p>
+                    </div>
+
+                    <!-- Days Row -->
+                    <div class="flex items-center justify-between gap-3">
+                        @foreach($days as $dayData)
+                            <div class="flex-1">
+                                <div class="text-center">
+                                    <!-- Coin Stack -->
+                                    @if($dayData['current'] && $canClaim)
+                                        <!-- Clickable Current Day -->
+                                        <form action="{{ route('daily-rewards.claim') }}" method="POST" class="inline-block">
+                                            @csrf
+                                            <button type="submit" class="relative mb-2 transform transition-all hover:scale-110 coin-stack-button">
+                                                @if($dayData['day'] == 1)
+                                                    <!-- Day 1: 1 Koin -->
+                                                    <div class="text-5xl animate-bounce">🪙</div>
+                                                @elseif($dayData['day'] == 2)
+                                                    <!-- Day 2: 2 Koin -->
+                                                    <div class="relative inline-block">
+                                                        <div class="text-4xl absolute" style="bottom: 0px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-4xl absolute" style="bottom: 10px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="h-20 w-16"></div>
+                                                    </div>
+                                                @elseif($dayData['day'] == 3)
+                                                    <!-- Day 3: 3 Koin -->
+                                                    <div class="relative inline-block">
+                                                        <div class="text-4xl absolute" style="bottom: 0px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-4xl absolute" style="bottom: 8px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-4xl absolute" style="bottom: 16px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="h-24 w-16"></div>
+                                                    </div>
+                                                @elseif($dayData['day'] == 4)
+                                                    <!-- Day 4: Banyak koin (4-5 koin) -->
+                                                    <div class="relative inline-block">
+                                                        <div class="text-3xl absolute" style="bottom: 0px; left: 30%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 0px; left: 70%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 10px; left: 40%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 10px; left: 60%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 20px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="h-24 w-20"></div>
+                                                    </div>
+                                                @elseif($dayData['day'] == 5)
+                                                    <!-- Day 5: Lebih banyak lagi (6-7 koin) -->
+                                                    <div class="relative inline-block">
+                                                        <div class="text-3xl absolute" style="bottom: 0px; left: 20%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 0px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 0px; left: 80%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 8px; left: 35%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 8px; left: 65%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 16px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 24px; left: 50%; transform: translateX(-50%);">💎</div>
+                                                        <div class="h-28 w-20"></div>
+                                                    </div>
+                                                @elseif($dayData['day'] == 6)
+                                                    <!-- Day 6: Melimpah (pile of coins) -->
+                                                    <div class="relative inline-block">
+                                                        <div class="text-2xl absolute" style="bottom: 0px; left: 15%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-2xl absolute" style="bottom: 0px; left: 40%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-2xl absolute" style="bottom: 0px; left: 60%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-2xl absolute" style="bottom: 0px; left: 85%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-2xl absolute" style="bottom: 8px; left: 25%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-2xl absolute" style="bottom: 8px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-2xl absolute" style="bottom: 8px; left: 75%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-2xl absolute" style="bottom: 16px; left: 35%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-2xl absolute" style="bottom: 16px; left: 65%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-3xl absolute" style="bottom: 24px; left: 50%; transform: translateX(-50%);">💎</div>
+                                                        <div class="h-28 w-24"></div>
+                                                    </div>
+                                                @else
+                                                    <!-- Day 7: Sekarung Koin 💰 -->
+                                                    <div class="text-6xl animate-bounce">💰</div>
+                                                @endif
+                                                
+                                                <!-- Points Badge -->
+                                                <div class="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs font-bold rounded-full px-2 py-1 shadow-lg">
+                                                    +{{ $dayData['points'] }}
+                                                </div>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <div class="relative inline-block mb-2">
+                                            @if($dayData['claimed'])
+                                                <!-- Claimed: Full color with checkmark -->
+                                                @if($dayData['day'] == 1)
+                                                    <div class="text-5xl relative">
+                                                        🪙
+                                                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                            <svg class="w-10 h-10 text-white bg-green-500 rounded-full p-1 shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                @elseif($dayData['day'] == 2)
+                                                    <div class="relative">
+                                                        <div class="text-4xl absolute" style="bottom: 0px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="text-4xl absolute" style="bottom: 10px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        <div class="h-20 w-16"></div>
+                                                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                            <svg class="w-10 h-10 text-white bg-green-500 rounded-full p-1 shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                @elseif($dayData['day'] == 7)
+                                                    <div class="text-6xl relative">
+                                                        💰
+                                                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                            <svg class="w-12 h-12 text-white bg-green-500 rounded-full p-1 shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <div class="relative">
+                                                        @for($i = 0; $i < min($dayData['day'], 4); $i++)
+                                                            <div class="text-3xl absolute" style="bottom: {{ $i * 8 }}px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        @endfor
+                                                        <div class="h-24 w-16"></div>
+                                                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                            <svg class="w-10 h-10 text-white bg-green-500 rounded-full p-1 shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                            @elseif($dayData['current'])
+                                                <!-- Current but already claimed today -->
+                                                @if($dayData['day'] == 7)
+                                                    <div class="text-6xl opacity-50 grayscale">💰</div>
+                                                @elseif($dayData['day'] == 1)
+                                                    <div class="text-5xl opacity-50 grayscale">🪙</div>
+                                                @else
+                                                    <div class="relative opacity-50 grayscale">
+                                                        @for($i = 0; $i < min($dayData['day'], 4); $i++)
+                                                            <div class="text-3xl absolute" style="bottom: {{ $i * 8 }}px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        @endfor
+                                                        <div class="h-24 w-16"></div>
+                                                    </div>
+                                                @endif
+                                            @else
+                                                <!-- Locked/Future: Grayscale -->
+                                                @if($dayData['day'] == 7)
+                                                    <div class="text-6xl opacity-30 grayscale">💰</div>
+                                                @elseif($dayData['day'] == 1)
+                                                    <div class="text-5xl opacity-30 grayscale">🪙</div>
+                                                @else
+                                                    <div class="relative opacity-30 grayscale">
+                                                        @for($i = 0; $i < min($dayData['day'], 4); $i++)
+                                                            <div class="text-3xl absolute" style="bottom: {{ $i * 8 }}px; left: 50%; transform: translateX(-50%);">🪙</div>
+                                                        @endfor
+                                                        <div class="h-24 w-16"></div>
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    @endif
+                                    
+                                    <!-- Day Label with Points (Hidden when can claim) -->
+                                    @if(!($dayData['current'] && $canClaim))
+                                        <div class="text-xs text-gray-600 font-semibold">
+                                            Day {{ $dayData['day'] }}
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            {{ $dayData['points'] }} pts
+                                        </div>
+                                    @else
+                                        <!-- Empty space to maintain alignment -->
+                                        <div class="h-8"></div>
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            @if(!$loop->last)
+                                <!-- Connector Line -->
+                                <div class="flex-shrink-0 w-8 h-0.5 {{ $dayData['claimed'] ? 'bg-yellow-400' : 'bg-gray-200' }} mb-12"></div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+
+                <style>
+                    @keyframes spin-coin {
+                        0% { transform: rotateY(0deg) scale(1); }
+                        50% { transform: rotateY(180deg) scale(1.15); }
+                        100% { transform: rotateY(360deg) scale(1); }
+                    }
+                    
+                    @keyframes shake-treasure {
+                        0%, 100% { transform: rotate(0deg) scale(1); }
+                        25% { transform: rotate(-5deg) scale(1.05); }
+                        75% { transform: rotate(5deg) scale(1.05); }
+                    }
+                    
+                    .coin-stack-button:active {
+                        animation: spin-coin 0.6s ease-in-out;
+                    }
+                    
+                    .coin-stack-button:hover {
+                        filter: brightness(1.1);
+                    }
+                    
+                    .coin-stack-button:active:has(div:first-child:contains("💰")) {
+                        animation: shake-treasure 0.5s ease-in-out;
+                    }
+                </style>
+            @endif
+        @endauth
+
+        <!-- produk utama (paginasi, filter, search) -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-lg">
+                    @if(request('category'))
+                        {{ $categories->firstWhere('slug', request('category'))?->name ?? 'Produk' }}
+                    @else
+                        Produk
+                    @endif
+                </h2>
+                @if(request('category'))
+                    <a href="{{ route('home', request()->except(['category','page'])) }}" class="text-blue-600">Lihat Semua</a>
+                @endif
+            </div>
+            <div class="grid grid-cols-5 gap-4">
+                @forelse($products as $product)
+                    @include('components.product-card', ['product'=>$product])
+                @empty
+                    <div class="col-span-5 text-center text-gray-500">Produk tidak ditemukan</div>
+                @endforelse
+            </div>
+            <div class="mt-6">
+                @if($products->hasPages())
+                    <nav class="flex justify-center">
+                        <ul class="inline-flex -space-x-px">
+                            @foreach ($products->links()->elements[0] as $page => $url)
+                                @if ($page == $products->currentPage())
+                                    <li>
+                                        <span class="px-3 py-1 bg-blue-600 text-white rounded mx-1">{{ $page }}</span>
+                                    </li>
+                                @else
+                                    <li>
+                                        <a href="{{ $url }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded mx-1 hover:bg-blue-100">{{ $page }}</a>
+                                    </li>
+                                @endif
+                            @endforeach
+                        </ul>
+                    </nav>
+                @endif
+            </div>
+        </div>
+    </div>
+@endsection
