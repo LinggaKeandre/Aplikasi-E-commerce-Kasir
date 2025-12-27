@@ -191,6 +191,6 @@ Developed by **Lingga Keandre** - Full-stack Developer
 
 ---
 
-⭐ **Star this repo if you find it useful!**
+⭐ **Star this repo if you find it useful, Thank You!**
 
 💡 **For issues or questions, please open an issue on GitHub**
